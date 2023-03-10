@@ -1,22 +1,24 @@
-// //import auth
-// const auth = require("../auth")
-// const jwt = require("jsonwebtoken")
-// const SECRET_KEY = "BelajarNodeJSItuMenyengankan"
+//import auth
+const auth = require("../auth")
+const jwt = require("jsonwebtoken")
+const SECRET_KEY = "BelajarNodeJSItuMenyengankan"
+const { isRole } = require("../auth")
 
-//import express
-const express = require("express")
-const app = express()
-app.use(express.json())
+//import library
+const express = require('express');
+const bodyParser = require('body-parser');
 
-// import md5
-const md5 = require("md5")
+//implementasi library
+const app = express();
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
 //import model
 const models = require("../models/index")
 const meja = models.meja
 
 //menampilkan semua data meja
-app.get("/", (req, res) =>{
+app.get("/", isRole(["admin"]), (req, res) => {
     meja.findAll()
         .then(result => {
             res.json({
@@ -32,7 +34,7 @@ app.get("/", (req, res) =>{
 })
 
 //menampilkan data meja berdasarkan id
-app.get("/:id_meja", (req, res) =>{
+app.get("/:id_meja", isRole(["admin"]), (req, res) =>{
     meja.findOne({ where: {id_meja: req.params.id_meja}})
     .then(result => {
         res.json({
@@ -47,7 +49,7 @@ app.get("/:id_meja", (req, res) =>{
 })
 
 //menambahkan data meja baru
-app.post("/",(req, res) =>{ 
+app.post("/", isRole(["admin"]), (req, res) =>{ 
         let data = {
             nomor_meja : req.body.nomor_meja,
             status : req.body.status
@@ -66,7 +68,7 @@ app.post("/",(req, res) =>{
 })
 
 //mengubah data meja berdasarkan id
-app.put("/:id", (req, res) =>{
+app.put("/:id", isRole(["admin"]), (req, res) =>{
     let param = { id_meja: req.params.id}
     let data = {
         nomor_meja : req.body.nomor_meja,
@@ -87,7 +89,7 @@ app.put("/:id", (req, res) =>{
 })
 
 //menghapus data meja berdasarkan id
-app.delete("/:id", async (req, res) =>{
+app.delete("/:id", isRole(["admin"]), (req, res) =>{
         let param = { id_meja: req.params.id}
         // delete data
         meja.destroy({where: param})
@@ -103,30 +105,5 @@ app.delete("/:id", async (req, res) =>{
             })
         })
 })
-
-// //login
-// app.post("/auth", async (req,res) => {
-//     let data= {
-//         nama: req.body.nama,
-//         tlp: req.body.tlp                 
-//     }
-
-//     let result = await meja.findOne({where: data})
-//     if(result){
-//         let payload = JSON.stringify(result)
-//         // generate token
-//         let token = jwt.sign(payload, SECRET_KEY)
-//         res.json({
-//             logged: true,
-//             data: result,
-//             token: token
-//         })
-//     }else{
-//         res.json({
-//             logged: false,
-//             message: "Invalid username or password"
-//         })
-//     }
-// })
 
 module.exports = app
