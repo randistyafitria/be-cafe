@@ -25,4 +25,16 @@ auth = (req, res, next) => {
     }
 }
 
-module.exports = auth
+const isRole = (authRoles = []) => (req,res,next)=>{
+    let token = req.headers.authorization.split(" ")[1]
+    let decoded = jwt.verify(token, SECRET_KEY)
+    if (authRoles.includes(decoded.role)) {
+        next()
+    } else {
+        res.json({
+            message: "You are not authorized to access this resource"
+        })
+    }
+}
+
+module.exports = {auth, isRole}
