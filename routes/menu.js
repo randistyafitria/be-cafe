@@ -1,7 +1,9 @@
 //import library
 const express = require('express');
 const bodyParser = require('body-parser');
-const md5 = require('md5');
+
+const { isRole } = require("../auth")
+const SECRET_KEY = "BelajarNodeJSItuMenyengankan"
 
 //import multer
 const multer = require("multer")
@@ -10,6 +12,7 @@ const fs = require("fs")
 
 //implementasi library
 const app = express();
+const { Op } = require("sequelize")
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -29,7 +32,7 @@ const storage = multer.diskStorage({
 let upload = multer({storage: storage})
 
 //endpoint menampilkan semua data menu, method: GET, function: findAll()
-app.get("/", (req,res) => {
+app.get("/", isRole(["admin"]), async (req,res) => {
     menu.findAll()
         .then(result => {
             res.json({
@@ -45,7 +48,7 @@ app.get("/", (req,res) => {
 })
 
 //menampilkan data menu berdasarkan id
-app.get("/:id_menu", (req, res) =>{
+app.get("/:id_menu", isRole(["admin"]), async (req, res) =>{
     menu.findOne({ where: {id_menu: req.params.id_menu}})
     .then(result => {
         res.json({
@@ -59,26 +62,8 @@ app.get("/:id_menu", (req, res) =>{
     })
 })
 
-// //Bersasarkan id_user
-// app.get("/byUser/:id_user", async (req, res) => {
-//     let result = await menu.findAll({
-//         where: { id_user: req.params.id_user },
-//         include: [
-//             "user",
-//             {
-//                 model: model.user,
-//                 as: "user",
-//             }
-//         ]
-//     })
-//     res.json({
-//         menu: result
-//     })
-
-// })
-
 //endpoint untuk menyimpan data menu, METHOD: POST, function: create
-app.post("/",  upload.single("gambar"), (req,res) => {
+app.post("/",  upload.single("gambar"), isRole(["admin"]), async (req,res) => {
     if (!req.file) {
         res.json({
             message: "No uploaded file"
@@ -107,7 +92,7 @@ app.post("/",  upload.single("gambar"), (req,res) => {
 })
 
 //endpoint mengupdate data menu, METHOD: PUT, function:update
-app.put("/:id",  upload.single("gambar"), (req,res) => {
+app.put("/:id",  upload.single("gambar"), isRole(["admin"]), async (req,res) => {
     let param = {
         id_menu : req.params.id
     }
@@ -151,7 +136,7 @@ app.put("/:id",  upload.single("gambar"), (req,res) => {
 })
 
 //menghapus data menu berdasarkan id
-app.delete("/:id", async (req, res) =>{
+app.delete("/:id", isRole(["admin"]), async (req, res) =>{
     try {
         let param = { id_menu: req.params.id}
         let result = await menu.findOne({where: param})
@@ -180,6 +165,45 @@ app.delete("/:id", async (req, res) =>{
             message: error.message
         })
     }
+})
+
+//search menu
+app.post("/search/:keyword", async (req, res) => {
+    let keyword = req.params.keyword //keyword?
+    let result = await menu.findAll({
+        where: {
+            [Op.or]: [
+                {
+                    id_menu: {
+                        [Op.like]: `%${keyword}%`
+                    }
+                },
+                {
+                    nama_menu: {
+                        [Op.like]: `%${keyword}%`
+                    }
+                },
+                {
+                    jenis: {
+                        [Op.like]: `%${keyword}%`
+                    }
+                },
+                {
+                    deskripsi: {
+                        [Op.like]: `%${keyword}%`
+                    }
+                },
+                {
+                    harga: {
+                        [Op.like]: `%${keyword}%`
+                    }
+                },
+            ]
+        }
+    })
+    res.json({
+        menu: result
+    })
 })
 
 module.exports = app
