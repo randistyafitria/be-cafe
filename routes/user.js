@@ -2,6 +2,7 @@
 const auth = require("../auth")
 const jwt = require("jsonwebtoken")
 const SECRET_KEY = "BelajarNodeJSItuMenyengankan"
+const { isRole } = require("../auth")
 
 //import library
 const express = require('express');
@@ -18,7 +19,7 @@ const model = require('../models/index');
 const user = model.user
 
 //endpoint menampilkan semua data user, method: GET, function: findAll()
-app.get("/",auth, (req,res) => {
+app.get("/", isRole(["admin"]), async (req,res) => {
     user.findAll()
         .then(result => {
             res.json({
@@ -34,7 +35,7 @@ app.get("/",auth, (req,res) => {
 })
 
 //menampilkan data user berdasarkan id
-app.get("/:id_user", (req, res) =>{
+app.get("/:id_user", isRole(["admin"]), async (req, res) =>{
     user.findOne({ where: {id_user: req.params.id_user}})
     .then(result => {
         res.json({
@@ -49,7 +50,7 @@ app.get("/:id_user", (req, res) =>{
 })
 
 //endpoint untuk menyimpan data user, METHOD: POST, function: create
-app.post("/", (req,res) => {
+app.post("/", isRole(["admin"]), async (req,res) => {
     let data = {
         nama_user : req.body.nama_user,
         role : req.body.role,
@@ -71,7 +72,7 @@ app.post("/", (req,res) => {
 })
 
 //endpoint mengupdate data user, METHOD: PUT, function:update
-app.put("/:id", (req,res) => {
+app.put("/:id", isRole(["admin"]), async (req,res) => {
     let param = {
         id_user : req.params.id
     }
@@ -95,7 +96,7 @@ app.put("/:id", (req,res) => {
 })
 
 //endpoint menghapus data user, METHOD: DELETE, function: destroy
-app.delete("/:id", (req,res) => {
+app.delete("/:id", isRole(["admin"]), async (req,res) => {
     let param = {
         id_user : req.params.id
     }
